@@ -1,3 +1,4 @@
+local QRCore = exports['qr-core']:GetCoreObject()
 
 local scoreboardOpen = false
 local PlayerOptin = {}
@@ -5,7 +6,7 @@ local PlayerOptin = {}
 RegisterNetEvent('QRCore:Client:OnPlayerLoaded')
 AddEventHandler('QRCore:Client:OnPlayerLoaded', function()
     isLoggedIn = true
-    exports['qr-core']:TriggerCallback('qr-scoreboard:server:GetConfig', function(config)
+    QRCore.Functions.TriggerCallback('qr-scoreboard:server:GetConfig', function(config)
         Config.IllegalActions = config
     end)
 end)
@@ -20,9 +21,9 @@ Citizen.CreateThread(function()
         Citizen.Wait(0)
         if IsControlJustReleased(0, 0x3C3DD371) and IsInputDisabled(0) then  -- PAGEDOWN
             if not scoreboardOpen then
-                exports['qr-core']:TriggerCallback('qr-scoreboard:server:GetPlayersArrays', function(playerList)
-                    exports['qr-core']:TriggerCallback('qr-scoreboard:server:GetActivity', function(cops, ambulance)
-                        exports['qr-core']:TriggerCallback("qr-scoreboard:server:GetCurrentPlayers", function(Players)
+                QRCore.Functions.TriggerCallback('qr-scoreboard:server:GetPlayersArrays', function(playerList)
+                    QRCore.Functions.TriggerCallback('qr-scoreboard:server:GetActivity', function(cops, ambulance)
+                        QRCore.Functions.TriggerCallback("qr-scoreboard:server:GetCurrentPlayers", function(Players)
                             PlayerOptin = playerList
                             Config.CurrentCops = cops
 
@@ -63,9 +64,9 @@ end)
 
 -- RegisterCommand('scoreboard', function()
 --     if not scoreboardOpen then
---         exports['qr-core']:TriggerCallback('qr-scoreboard:server:GetPlayersArrays', function(playerList)
---             exports['qr-core']:TriggerCallback('qr-scoreboard:server:GetActivity', function(cops, ambulance)
---                 exports['qr-core']:TriggerCallback("qr-scoreboard:server:GetCurrentPlayers", function(Players)
+--         QRCore.Functions.TriggerCallback('qr-scoreboard:server:GetPlayersArrays', function(playerList)
+--             QRCore.Functions.TriggerCallback('qr-scoreboard:server:GetActivity', function(cops, ambulance)
+--                 QRCore.Functions.TriggerCallback("qr-scoreboard:server:GetCurrentPlayers", function(Players)
 --                     PlayerOptin = playerList
 --                     Config.CurrentCops = cops
 
