@@ -1,2 +1,2 @@
-# qb-scoreboard
-Scoreboard for QB-Core
+# qr-scoreboard
+Scoreboard for Qr-Core
