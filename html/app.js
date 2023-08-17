@@ -23,7 +23,7 @@ const Open = (data) => {
     // For anyone wondering, this does work, you can leave the brackets out if you have just one line of code to execute
     if (category.busy)
       $(status).html('<i class="fas fa-clock"></i>');
-    else if (data.currentCops >= category.minimumPolice)
+    else if (data.currentCops >= category.minimum)
       $(status).html('<i class="fas fa-check"></i>');
     else
       $(status).html('<i class="fas fa-times"></i>');
