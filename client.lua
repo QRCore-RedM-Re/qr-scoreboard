@@ -1,114 +1,56 @@
-local QRCore = exports['qr-core']:GetCoreObject()
-
+local Key = QRCore.Shared.GetKey(Config.OpenKey)
 local scoreboardOpen = false
 local PlayerOptin = {}
 
-RegisterNetEvent('QRCore:Client:OnPlayerLoaded')
-AddEventHandler('QRCore:Client:OnPlayerLoaded', function()
-    isLoggedIn = true
-    QRCore.Functions.TriggerCallback('qr-scoreboard:server:GetConfig', function(
-        config) Config.IllegalActions = config end)
-end)
+local function DrawText3D(x, y, z, text)
+	local onScreen, screenX, screenY = GetScreenCoordFromWorldCoord(x, y, z)
+
+	SetTextScale(0.35, 0.35)
+	SetTextFontForCurrentCommand(1)
+	SetTextColor(255, 255, 255, 223)
+	SetTextCentre(1)
+	DisplayText(CreateVarString(10, "LITERAL_STRING", text), screenX, screenY)
+end
 
 RegisterNetEvent('qr-scoreboard:client:SetActivityBusy')
 AddEventHandler('qr-scoreboard:client:SetActivityBusy', function(activity, busy)
     Config.IllegalActions[activity].busy = busy
 end)
 
-Citizen.CreateThread(function()
+CreateThread(function()
     while true do
-        Citizen.Wait(0)
-        if IsControlJustReleased(0, 0x3C3DD371) and IsInputDisabled(0) then -- PAGEDOWN
+        Wait(0)
+        if IsControlJustReleased(0, Key) and IsInputDisabled(0) then
             if not scoreboardOpen then
-                QRCore.Functions.TriggerCallback(
-                    'qr-scoreboard:server:GetPlayersArrays',
-                    function(playerList)
-                        QRCore.Functions.TriggerCallback(
-                            'qr-scoreboard:server:GetActivity',
-                            function(cops, ambulance)
-                                QRCore.Functions.TriggerCallback(
-                                    "qr-scoreboard:server:GetCurrentPlayers",
-                                    function(Players)
-                                        PlayerOptin = playerList
-                                        Config.CurrentCops = cops
+                local playerList, players, lawmen = lib.callback.await('qr-scoreboard:server:GetScoreboardData', false)
 
-                                        SendNUIMessage({
-                                            action = "open",
-                                            players = Players,
-                                            maxPlayers = Config.MaxPlayers,
-                                            requiredCops = Config.IllegalActions,
-                                            currentCops = Config.CurrentCops,
-                                            currentAmbulance = ambulance
-                                        })
-                                        scoreboardOpen = true
-                                    end)
-                            end)
-                    end)
+                PlayerOptin = players
+                Config.CurrentCops = lawmen
+
+                SendNUIMessage({
+                    action = "open",
+                    players = playerList,
+                    maxPlayers = Config.MaxPlayers,
+                    requiredCops = Config.IllegalActions,
+                    currentCops = Config.CurrentCops,
+                })
+                scoreboardOpen = true
             else
                 SendNUIMessage({action = "close"})
                 scoreboardOpen = false
             end
+        end
 
-            if scoreboardOpen then
-                for _, player in pairs(GetPlayersFromCoords(GetEntityCoords(
-                                                                PlayerPedId()),
-                                                            10.0)) do
-                    local PlayerId = GetPlayerServerId(player)
-                    local PlayerPed = GetPlayerPed(player)
-                    local PlayerName = GetPlayerName(player)
-                    local PlayerCoords = GetEntityCoords(PlayerPed)
+        if scoreboardOpen then
+            local nearby = lib.getNearbyPlayers(GetEntityCoords(cache.ped), 10, true)
+            for _, player in pairs(nearby) do
+                local PlayerID = GetPlayerServerId(player.id)
+                local PlayerCoords = GetEntityCoords(player.ped)
 
-                    if not PlayerOptin[PlayerId].permission then
-                        DrawText3D(PlayerCoords.x, PlayerCoords.y,
-                                   PlayerCoords.z + 1.0, '[' .. PlayerId .. ']')
-                    end
+                if Config.ShowAllID or PlayerOptin[PlayerID].permission then
+                    DrawText3D(PlayerCoords.x, PlayerCoords.y, PlayerCoords.z + 1.0, '[' .. PlayerID .. ']')
                 end
             end
         end
     end
 end)
-
--- Functions
-
-DrawText3D = function(x, y, z, text)
-    SetTextScale(0.35, 0.35)
-    SetTextFont(4)
-    SetTextProportional(1)
-    SetTextColour(255, 255, 255, 215)
-    SetTextEntry("STRING")
-    SetTextCentre(true)
-    AddTextComponentString(text)
-    SetDrawOrigin(x, y, z, 0)
-    DrawText(0.0, 0.0)
-    local factor = (string.len(text)) / 370
-    DrawRect(0.0, 0.0 + 0.0125, 0.017 + factor, 0.03, 0, 0, 0, 75)
-    ClearDrawOrigin()
-end
-
-GetPlayersFromCoords = function(coords, distance)
-    local players = GetPlayers()
-    local closePlayers = {}
-
-    if coords == nil then coords = GetEntityCoords(PlayerPedId()) end
-    if distance == nil then distance = 5.0 end
-    for _, player in pairs(players) do
-        local target = GetPlayerPed(player)
-        local targetCoords = GetEntityCoords(target)
-        local targetdistance = #(targetCoords -
-                                   vector3(coords.x, coords.y, coords.z))
-        if targetdistance <= distance then
-            table.insert(closePlayers, player)
-        end
-    end
-
-    return closePlayers
-end
-
-GetPlayers = function()
-    local players = {}
-    for _, player in ipairs(GetActivePlayers()) do
-        local ped = GetPlayerPed(player)
-        if DoesEntityExist(ped) then table.insert(players, player) end
-    end
-    return players
-end
